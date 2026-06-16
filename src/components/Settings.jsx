@@ -12,7 +12,6 @@ import {
   Sparkles,
   MapPin,
   Warehouse,
-  Navigation,
   Package,
   RotateCcw,
 } from 'lucide-react';
@@ -34,7 +33,7 @@ export default function Settings({
   selectedRegion,
   onChangeRegion,
 }) {
-  const { accentColor, setAccentColor, isDark } = useTheme();
+  const { accentColor, setAccentColor } = useTheme();
   const [thresholdConfigured, setThresholdConfigured] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 

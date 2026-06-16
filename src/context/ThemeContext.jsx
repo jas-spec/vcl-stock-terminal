@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
@@ -57,9 +58,6 @@ export function ThemeProvider({ children }) {
     root.style.setProperty('--color-accent-hover', colors.hover);
     root.style.setProperty('--color-accent-soft', colors.soft);
     
-    // Also update a glow shadow with accent color
-    const glowColor = isDark ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.15)';
-    const colorHex = colors.accent;
     // Simple hex to rgba approximation for shadow glow
     const shadowValue = `0 0 20px ${colors.soft.replace('0.08', '0.15').replace('0.1', '0.2')}`;
     root.style.setProperty('--shadow-glow', shadowValue);

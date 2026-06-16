@@ -1,6 +1,5 @@
-import React from 'react';
 import VclLogo from './VclLogo';
-import { Warehouse, MapPin } from 'lucide-react';
+import { Warehouse } from 'lucide-react';
 
 export default function RegionSelector({ onSelectRegion }) {
   const regions = [

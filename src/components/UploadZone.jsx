@@ -34,7 +34,7 @@ function formatSize(bytes) {
   return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-export default function UploadZone({ onFileProcessed, isLoading }) {
+export default function UploadZone({ onFileProcessed }) {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
   const [error, setError] = useState(null);

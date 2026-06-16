@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 // Single KPI Card with real-time flash updates
-function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = true, direction, gradient, bgColor, iconColor }) {
+function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = true, gradient, bgColor, iconColor }) {
   const [flashClass, setFlashClass] = useState('');
   const prevValueRef = useRef(value);
 

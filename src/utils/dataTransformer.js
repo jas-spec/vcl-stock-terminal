@@ -134,7 +134,7 @@ function parseNum(val) {
   if (val === null || val === undefined || val === '') return 0;
   if (typeof val === 'number') return val;
   // Remove commas and non-numeric chars except . and -
-  const cleaned = String(val).replace(/[^0-9.\-]/g, '');
+  const cleaned = String(val).replace(/[^0-9.-]/g, '');
   const num = parseFloat(cleaned);
   return isNaN(num) ? 0 : num;
 }

@@ -139,7 +139,7 @@ export function generateInventoryTimeSeries() {
 }
 
 // ── 3. Generate category summary data (for bar chart) ──────────────────
-export function generateCategoryData(nodeRegion = 'mumbai') {
+export function generateCategoryData() {
   return PRODUCT_CATEGORIES.map(cat => {
     const products = PRODUCTS[cat] || [];
     const totalQty = products.reduce((sum) => sum + rand(10, 80), 0);
@@ -255,7 +255,6 @@ export function tickInventoryData(prevData, config = {}) {
   const {
     consumptionRate = 'medium', // slow | medium | fast
     restockMode = 'manual',    // manual | auto
-    nodeRegion = 'mumbai'
   } = config;
 
   // Consumption amounts per tick

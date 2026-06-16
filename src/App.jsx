@@ -8,7 +8,7 @@ import RegionSelector from './components/RegionSelector';
 import { DashboardSkeleton } from './components/Skeletons';
 import { generateAllMockData, tickInventoryData } from './data/mockData';
 import { transformParsedData } from './utils/dataTransformer';
-import { AlertTriangle, X, BellRing, XCircle, Package } from 'lucide-react';
+import { X, BellRing } from 'lucide-react';
 
 export default function App() {
   const [activeView, setActiveView] = useState('dashboard');

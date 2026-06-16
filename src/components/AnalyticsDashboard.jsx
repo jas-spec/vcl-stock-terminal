@@ -1,4 +1,4 @@
-import { FileText, Calendar, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
+import { FileText, Calendar, AlertTriangle, XCircle } from 'lucide-react';
 import KPICards from './KPICards';
 import DataGrid from './DataGrid';
 import LineChartPanel from './charts/LineChartPanel';
