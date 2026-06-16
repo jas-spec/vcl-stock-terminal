@@ -168,7 +168,6 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => uploadState !== 'uploading' && inputRef.current?.click()}
       >
         <input
           ref={inputRef}
@@ -176,7 +175,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
           id="file-input"
           accept=".xlsx,.xls,.pdf,.csv"
           onChange={handleInputChange}
-          className="hidden"
+          className={uploadState === 'idle' ? "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" : "hidden"}
         />
 
         {/* Idle State */}
