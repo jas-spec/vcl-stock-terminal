@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* light palette */
+  --color-bg-primary:   #F8FAFC;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary:  #F1F5F9;
+  --color-border:       #E2E8F0;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted:   #94A3B8;
+  --color-accent:       #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-accent-soft:  rgba(99, 102, 241, 0.08);
+  --color-success:      #10B981;
+  --color-warning:      #F59E0B;
+  --color-danger:       #EF4444;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+.dark {
+  --color-bg-primary:   #0B0F19;
+  --color-bg-secondary: #131825;
+  --color-bg-tertiary:  #1E293B;
+  --color-border:       #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted:   #475569;
+  --color-accent:       #818CF8;
+  --color-accent-hover: #6366F1;
+  --color-accent-soft:  rgba(129, 140, 248, 0.1);
+  --color-success:      #34D399;
+  --color-warning:      #FBBF24;
+  --color-danger:       #F87171;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 30px rgba(129, 140, 248, 0.2);
+}
+
+/* ── Global Resets ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar Styles ──────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* ── Skeleton Loader Animation ─────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 25%,
+    var(--color-border) 50%,
+    var(--color-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ── Fade / Slide Animations ───────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3); }
+  50%      { box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.15); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* stagger children */
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* ── Progress Ring ─────────────────────────────────────────── */
+@keyframes progressRing {
+  0%   { stroke-dashoffset: 283; }
+  100% { stroke-dashoffset: var(--progress-offset, 70); }
+}
+
+.progress-ring-circle {
+  animation: progressRing 1.2s ease-out forwards;
+  animation-delay: 0.3s;
+  stroke-dashoffset: 283;
+}
+
+/* ── Upload Dropzone ───────────────────────────────────────── */
+@keyframes borderDash {
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -20; }
+}
+
+/* ── Recharts Tooltip ──────────────────────────────────────── */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* ── KPI Ticking Flashes ────────────────────────────────────── */
+@keyframes flashUpBg {
+  0% { background-color: rgba(16, 185, 129, 0.18); border-color: #10B981; }
+  100% { background-color: var(--color-bg-secondary); border-color: var(--color-border); }
+}
+
+@keyframes flashDownBg {
+  0% { background-color: rgba(239, 68, 68, 0.18); border-color: #EF4444; }
+  100% { background-color: var(--color-bg-secondary); border-color: var(--color-border); }
+}
+
+.flash-up {
+  animation: flashUpBg 0.8s ease-out forwards;
+}
+
+.flash-down {
+  animation: flashDownBg 0.8s ease-out forwards;
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+

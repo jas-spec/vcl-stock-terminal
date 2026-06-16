@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="22" fill="#131825" />
+  <path d="M25 30L45 75L53 57" stroke="url(#f-grad-v)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M75 42C73 30 60 22 48 26C35 30 29 46 35 62C40 73 54 79 66 71" stroke="url(#f-grad-c)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M50 54L72 32H85" stroke="url(#f-grad-l)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M85 32L78 25M85 32L78 39" stroke="url(#f-grad-l)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <defs>
+    <linearGradient id="f-grad-v" x1="25" y1="30" x2="53" y2="75" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+    <linearGradient id="f-grad-c" x1="75" y1="22" x2="66" y2="71" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+    <linearGradient id="f-grad-l" x1="50" y1="54" x2="85" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EC4899" />
+      <stop offset="100%" stop-color="#F472B6" />
+    </linearGradient>
+  </defs>
+</svg>
