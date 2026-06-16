@@ -36,7 +36,7 @@ export default function App() {
   const handleSelectRegion = useCallback((region) => {
     setSelectedRegion(region);
     localStorage.setItem('vcl-selected-region', region);
-    
+
     if (dashboardData) {
       const name = dashboardData.kpi.fileName;
       const data = generateAllMockData(name, region);
@@ -114,7 +114,7 @@ export default function App() {
             restockMode,
             nodeRegion: selectedRegion,
           });
-          
+
           // Check for new out-of-stock items
           const outOfStockItems = next.alerts?.filter(a => a.severity === 'critical') || [];
           if (outOfStockItems.length > 0 && !alertTriggered) {
@@ -152,9 +152,9 @@ export default function App() {
         if (isLoading) return <DashboardSkeleton />;
         if (!dashboardData) {
           return (
-            <EmptyState 
-              onUploadClick={handleNavigateToUpload} 
-              onSimulateClick={handleStartSimulation} 
+            <EmptyState
+              onUploadClick={handleNavigateToUpload}
+              onSimulateClick={handleStartSimulation}
             />
           );
         }
@@ -184,9 +184,9 @@ export default function App() {
       default:
         if (dashboardData) return <AnalyticsDashboard data={dashboardData} />;
         return (
-          <EmptyState 
-            onUploadClick={handleNavigateToUpload} 
-            onSimulateClick={handleStartSimulation} 
+          <EmptyState
+            onUploadClick={handleNavigateToUpload}
+            onSimulateClick={handleStartSimulation}
           />
         );
     }
@@ -196,12 +196,12 @@ export default function App() {
     <div className="flex h-screen overflow-hidden animate-fade-in">
       <Sidebar activeView={activeView} onNavigate={setActiveView} />
       <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
-        
+
         {/* Floating Out-of-Stock Alert Notification */}
         {alertTriggered && alertItems.length > 0 && (
           <div className="fixed top-20 right-4 z-50 max-w-sm rounded-2xl border p-4 shadow-xl backdrop-blur-md animate-scale-in flex items-start gap-3"
-            style={{ 
-              backgroundColor: 'var(--color-bg-secondary)', 
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)',
               borderColor: 'rgba(239, 68, 68, 0.3)',
               boxShadow: '0 10px 25px -5px rgba(239, 68, 68, 0.15)'
             }}>
@@ -223,7 +223,7 @@ export default function App() {
                 Go to Settings → enable Auto-Refill or restock manually
               </p>
             </div>
-            <button 
+            <button
               onClick={() => setAlertTriggered(false)}
               className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer shrink-0 transition-colors p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
             >
