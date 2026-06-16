@@ -56,8 +56,9 @@ export async function parseExcelFile(file) {
 export async function parsePdfFile(file) {
   const pdfjsLib = await import('pdfjs-dist');
   
-  // Set worker source
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+  // Set worker source (fully qualified absolute URL for mobile browser compatibility)
+  const workerUrl = new URL(pdfjsWorker, window.location.origin).href;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
   
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
