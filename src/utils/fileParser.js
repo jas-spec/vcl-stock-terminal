@@ -4,6 +4,24 @@
 import * as XLSX from 'xlsx';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
+// ── Polyfills for Older Mobile Browsers ───────────────────────
+if (typeof Promise.withResolvers === 'undefined') {
+  Promise.withResolvers = function () {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
+
+if (!Object.values) {
+  Object.values = function (obj) {
+    return Object.keys(obj).map(key => obj[key]);
+  };
+}
+
 // ── Excel / CSV Parser ───────────────────────────────────────
 export async function parseExcelFile(file) {
   return new Promise((resolve, reject) => {
@@ -56,6 +74,7 @@ export async function parsePdfFile(file) {
           const textContent = await page.getTextContent();
           
           textContent.items.forEach(item => {
+            if (!item || typeof item.str !== 'string') return;
             const text = item.str.trim();
             if (text.length === 0) return;
             
