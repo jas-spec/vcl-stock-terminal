@@ -8,14 +8,16 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
+import { parseFile } from '../utils/fileParser';
 
 const ACCEPTED_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
   'application/vnd.ms-excel', // .xls
   'application/pdf',
+  'text/csv',
 ];
 
-const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.pdf'];
+const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.pdf', '.csv'];
 
 function getFileExtension(name) {
   return name.slice(name.lastIndexOf('.')).toLowerCase();
@@ -38,29 +40,46 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadState, setUploadState] = useState('idle'); // idle | uploading | success | error
+  const [parseInfo, setParseInfo] = useState(null); // { rowCount, headers }
   const inputRef = useRef(null);
 
-  const simulateUpload = useCallback((selectedFile) => {
+  const processFile = useCallback(async (selectedFile) => {
     setFile(selectedFile);
     setError(null);
     setUploadState('uploading');
     setUploadProgress(0);
+    setParseInfo(null);
 
+    // Animate progress while parsing
     let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15 + 5;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setUploadProgress(100);
-        setUploadState('success');
-        setTimeout(() => {
-          onFileProcessed(selectedFile);
-        }, 600);
-      } else {
-        setUploadProgress(Math.round(progress));
-      }
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 8 + 2;
+      if (progress > 85) progress = 85; // Cap at 85% until actual parsing is done
+      setUploadProgress(Math.round(progress));
     }, 200);
+
+    try {
+      // Actually parse the file
+      const parsedData = await parseFile(selectedFile);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploadState('success');
+      setParseInfo({
+        rowCount: parsedData.rows.length,
+        headers: parsedData.headers,
+        sheetName: parsedData.sheetName,
+      });
+
+      // Pass both the file AND parsed data to the parent
+      setTimeout(() => {
+        onFileProcessed(selectedFile, parsedData);
+      }, 600);
+    } catch (err) {
+      clearInterval(progressInterval);
+      setError(err.message || 'Failed to parse the file. Please check the format.');
+      setUploadState('error');
+    }
   }, [onFileProcessed]);
 
   const handleFiles = useCallback((files) => {
@@ -68,14 +87,14 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
     if (!selectedFile) return;
 
     if (!isValidFile(selectedFile)) {
-      setError(`"${selectedFile.name}" is not supported. Please upload .xlsx, .xls, or .pdf files.`);
+      setError(`"${selectedFile.name}" is not supported. Please upload .xlsx, .xls, .csv, or .pdf files.`);
       setUploadState('error');
       setFile(null);
       return;
     }
 
-    simulateUpload(selectedFile);
-  }, [simulateUpload]);
+    processFile(selectedFile);
+  }, [processFile]);
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -103,6 +122,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
     setError(null);
     setUploadState('idle');
     setUploadProgress(0);
+    setParseInfo(null);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -115,11 +135,11 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
       <div className="text-center mb-8">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3"
           style={{ color: 'var(--color-text-primary)' }}>
-          Upload Your Data
+          Upload Your Inventory
         </h1>
         <p className="text-base sm:text-lg max-w-md mx-auto"
           style={{ color: 'var(--color-text-secondary)' }}>
-          Drop your Excel or PDF file below and we&rsquo;ll generate beautiful analytics instantly
+          Drop your Excel, CSV, or PDF file below — we&rsquo;ll read the actual data and generate analytics from it
         </p>
       </div>
 
@@ -154,7 +174,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
           ref={inputRef}
           type="file"
           id="file-input"
-          accept=".xlsx,.xls,.pdf"
+          accept=".xlsx,.xls,.pdf,.csv"
           onChange={handleInputChange}
           className="hidden"
         />
@@ -168,7 +188,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
             </div>
             <div className="text-center">
               <p className="text-base font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                Drag & drop your file here
+                Drag & drop your inventory file here
               </p>
               <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 or <span className="font-medium" style={{ color: 'var(--color-accent)' }}>browse</span> to choose a file
@@ -177,7 +197,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
             <div className="flex items-center gap-3 mt-2">
               {[
                 { icon: FileSpreadsheet, label: '.xlsx' },
-                { icon: FileSpreadsheet, label: '.xls' },
+                { icon: FileSpreadsheet, label: '.csv' },
                 { icon: FileText, label: '.pdf' },
               ].map(({ icon: Icon, label }) => (
                 <span key={label} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
@@ -213,10 +233,10 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
               <p className="text-sm font-semibold flex items-center gap-2"
                 style={{ color: 'var(--color-text-primary)' }}>
                 <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
-                Processing {file?.name}
+                Reading {file?.name}
               </p>
               <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                Analyzing data structure...
+                Parsing file data and detecting columns...
               </p>
             </div>
           </div>
@@ -231,7 +251,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold" style={{ color: 'var(--color-success)' }}>
-                File processed successfully!
+                File parsed successfully!
               </p>
               <div className="flex items-center gap-2 mt-2 text-xs px-3 py-1.5 rounded-lg"
                 style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}>
@@ -239,6 +259,11 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
                 <span className="font-medium">{file?.name}</span>
                 <span>({formatSize(file?.size || 0)})</span>
               </div>
+              {parseInfo && (
+                <p className="text-xs mt-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                  Found <span style={{ color: 'var(--color-accent)' }} className="font-bold">{parseInfo.rowCount} items</span> with {parseInfo.headers.length} columns
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -252,7 +277,7 @@ export default function UploadZone({ onFileProcessed, isLoading }) {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold" style={{ color: 'var(--color-danger)' }}>
-                Upload Failed
+                Parse Failed
               </p>
               <p className="text-xs mt-1 max-w-xs" style={{ color: 'var(--color-text-muted)' }}>
                 {error}

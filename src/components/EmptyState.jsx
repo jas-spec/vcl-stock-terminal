@@ -1,35 +1,35 @@
-import { BarChart3, Upload, Zap, TrendingUp } from 'lucide-react';
+import { Package, Upload, Bell, BarChart3 } from 'lucide-react';
 import VclLogo from './VclLogo';
 
 export default function EmptyState({ onUploadClick, onSimulateClick }) {
   const features = [
     {
-      icon: TrendingUp,
-      title: 'Real-Time Tickers',
-      description: 'Watch stock price and transaction records update live every second',
+      icon: Package,
+      title: 'Inventory Tracking',
+      description: 'Track product quantities across all categories in real-time',
       color: 'var(--color-accent)',
       bg: 'var(--color-accent-soft)',
     },
     {
+      icon: Bell,
+      title: 'Low-Stock Alerts',
+      description: 'Get notified instantly when items run out or fall below reorder levels',
+      color: '#EF4444',
+      bg: 'rgba(239, 68, 68, 0.08)',
+    },
+    {
       icon: BarChart3,
-      title: 'Dynamic Visualizations',
-      description: 'Line, bar, donut, and scatter charts fluctuate to reflect live market demand',
+      title: 'Category Analytics',
+      description: 'Visual breakdowns of stock health, trends, and distribution by category',
       color: '#10B981',
       bg: 'rgba(16, 185, 129, 0.08)',
     },
     {
-      icon: Zap,
-      title: 'Active Alerts',
-      description: 'Set stock price alerts in settings that notify you immediately',
-      color: '#F59E0B',
-      bg: 'rgba(245, 158, 11, 0.08)',
-    },
-    {
       icon: Upload,
       title: 'File Upload Support',
-      description: 'Parse static Excel and PDF ledger sheets into interactive dashboards',
-      color: '#EC4899',
-      bg: 'rgba(236, 72, 153, 0.08)',
+      description: 'Upload Excel or CSV inventory files for instant analysis and insights',
+      color: '#F59E0B',
+      bg: 'rgba(245, 158, 11, 0.08)',
     },
   ];
 
@@ -43,7 +43,7 @@ export default function EmptyState({ onUploadClick, onSimulateClick }) {
             color: 'var(--color-accent)',
           }}>
           <VclLogo className="w-4 h-4 animate-spin-slow" />
-          Welcome to VCL Stock Analytics
+          Welcome to VCL Inventory Management
         </div>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 leading-tight"
@@ -54,13 +54,13 @@ export default function EmptyState({ onUploadClick, onSimulateClick }) {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
-            smarter trading
+            smarter inventory
           </span>
         </h1>
 
         <p className="text-base sm:text-lg leading-relaxed mx-auto max-w-lg"
           style={{ color: 'var(--color-text-secondary)' }}>
-          A professional, interactive, and responsive workspace designed to track stock values, volumes, distributions, and logs.
+          A professional dashboard to track product stock levels, get low-stock alerts, and manage warehouse inventory across Mumbai and Gujarat.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
@@ -75,8 +75,8 @@ export default function EmptyState({ onUploadClick, onSimulateClick }) {
               boxShadow: 'var(--shadow-glow)',
             }}
           >
-            <TrendingUp size={18} />
-            Simulate Live VCL Stock
+            <Package size={18} />
+            Simulate Inventory Demo
           </button>
           
           <button
@@ -93,7 +93,7 @@ export default function EmptyState({ onUploadClick, onSimulateClick }) {
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)'; }}
           >
             <Upload size={18} style={{ color: 'var(--color-accent)' }} />
-            Upload Ledger File
+            Upload Inventory File
           </button>
         </div>
       </div>

@@ -1,20 +1,21 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChartCard, useChartTheme } from './ChartComponents';
 
-const PIE_COLORS = [
-  'var(--color-accent)',
-  '#10B981',
-  '#EC4899',
-  '#F59E0B',
-  '#8B5CF6'
-];
+const STATUS_COLORS = {
+  'In Stock': '#10B981',
+  'Low Stock': '#F59E0B',
+  'Out of Stock': '#EF4444',
+  'Overstocked': '#6366F1',
+};
+
+const PIE_COLOR_ORDER = ['#10B981', '#F59E0B', '#EF4444', '#6366F1'];
 
 function CustomDonutTooltip({ active, payload }) {
   const { isDark } = useChartTheme();
 
   if (!active || !payload || !payload.length) return null;
 
-  const { name, value } = payload[0].payload;
+  const { name, value, count } = payload[0].payload;
   return (
     <div
       className="rounded-xl px-4 py-3 text-sm shadow-xl backdrop-blur-sm"
@@ -25,10 +26,15 @@ function CustomDonutTooltip({ active, payload }) {
       }}
     >
       <div className="flex items-center gap-2">
-        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: payload[0].payload.fill }} />
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[name] || '#6366F1' }} />
         <span className="text-xs font-semibold">{name}</span>
       </div>
       <p className="text-lg font-extrabold mt-1">{value}%</p>
+      {count !== undefined && (
+        <p className="text-[10px] font-medium mt-0.5" style={{ color: isDark ? '#94A3B8' : '#64748B' }}>
+          {count} item{count !== 1 ? 's' : ''}
+        </p>
+      )}
     </div>
   );
 }
@@ -54,8 +60,8 @@ export default function DonutChartPanel({ data }) {
   return (
     <ChartCard
       id="chart-donut"
-      title="Trade Type Breakdown"
-      subtitle="Proportional share of order executions today"
+      title="Stock Status Distribution"
+      subtitle="Proportion of inventory by stock health status"
     >
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -73,10 +79,10 @@ export default function DonutChartPanel({ data }) {
               animationBegin={0}
               animationDuration={400}
             >
-              {data.map((_, idx) => (
+              {data.map((entry, idx) => (
                 <Cell
                   key={idx}
-                  fill={PIE_COLORS[idx % PIE_COLORS.length]}
+                  fill={STATUS_COLORS[entry.name] || PIE_COLOR_ORDER[idx % PIE_COLOR_ORDER.length]}
                   className="transition-all duration-200 hover:opacity-80"
                 />
               ))}

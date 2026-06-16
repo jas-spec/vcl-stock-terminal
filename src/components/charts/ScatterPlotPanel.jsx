@@ -13,9 +13,9 @@ import { useMemo } from 'react';
 import { ChartCard, useChartTheme } from './ChartComponents';
 
 const SCATTER_COLORS = {
-  'Bids': '#10B981',        // Green buy orders
-  'Asks': '#EF4444',        // Red sell orders
-  'Stop Orders': '#F59E0B', // Amber stop orders
+  'Needs Reorder': '#EF4444',
+  'Adequate': '#10B981',
+  'Overstocked': '#6366F1',
 };
 
 function CustomScatterTooltip({ active, payload }) {
@@ -24,7 +24,6 @@ function CustomScatterTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0].payload;
-  const isBid = data.category === 'Bids';
   return (
     <div
       className="rounded-xl px-4 py-3 text-sm shadow-xl backdrop-blur-sm"
@@ -35,16 +34,16 @@ function CustomScatterTooltip({ active, payload }) {
       }}
     >
       <p className="text-xs font-bold mb-1.5" style={{ color: SCATTER_COLORS[data.category] || 'var(--color-accent)' }}>
-        {data.category}
+        {data.name} — {data.category}
       </p>
       <div className="space-y-0.5 text-xs font-medium">
         <p>
-          <span style={{ color: isDark ? '#94A3B8' : '#64748B' }}>Offset:</span>{' '}
-          <span className="font-semibold">{data.x >= 0 ? '+' : ''}${data.x.toFixed(2)}</span>
+          <span style={{ color: isDark ? '#94A3B8' : '#64748B' }}>Current Qty:</span>{' '}
+          <span className="font-semibold">{data.x} units</span>
         </p>
         <p>
-          <span style={{ color: isDark ? '#94A3B8' : '#64748B' }}>Order Qty:</span>{' '}
-          <span className="font-semibold">{data.y.toLocaleString()} shares</span>
+          <span style={{ color: isDark ? '#94A3B8' : '#64748B' }}>Reorder Level:</span>{' '}
+          <span className="font-semibold">{data.y} units</span>
         </p>
       </div>
     </div>
@@ -69,8 +68,8 @@ export default function ScatterPlotPanel({ data }) {
   return (
     <ChartCard
       id="chart-scatter"
-      title="Order Book Depth Scatter"
-      subtitle="Bids, asks, and stops offset from current midprice"
+      title="Quantity vs Reorder Level"
+      subtitle="Each dot is a product — red dots need immediate restocking"
     >
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -79,20 +78,20 @@ export default function ScatterPlotPanel({ data }) {
             <XAxis
               type="number"
               dataKey="x"
-              name="Price Offset"
+              name="Current Quantity"
               tick={{ fontSize: 10, fill: textColor }}
               axisLine={{ stroke: axisColor }}
               tickLine={false}
-              tickFormatter={(v) => `${v >= 0 ? '+' : ''}$${v}`}
+              tickFormatter={(v) => `${v} qty`}
             />
             <YAxis
               type="number"
               dataKey="y"
-              name="Order Size"
+              name="Reorder Level"
               tick={{ fontSize: 11, fill: textColor }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) => `${v}sh`}
+              tickFormatter={(v) => `${v}`}
             />
             <ZAxis type="number" dataKey="z" range={[40, 180]} />
             <Tooltip content={<CustomScatterTooltip />} />

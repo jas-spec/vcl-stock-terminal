@@ -6,70 +6,89 @@ import EmptyState from './components/EmptyState';
 import Settings from './components/Settings';
 import RegionSelector from './components/RegionSelector';
 import { DashboardSkeleton } from './components/Skeletons';
-import { generateAllMockData, tickStockData } from './data/mockData';
-import { AlertTriangle, X, BellRing } from 'lucide-react';
+import { generateAllMockData, tickInventoryData } from './data/mockData';
+import { transformParsedData } from './utils/dataTransformer';
+import { AlertTriangle, X, BellRing, XCircle, Package } from 'lucide-react';
 
 export default function App() {
   const [activeView, setActiveView] = useState('dashboard');
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Region parameters
+  // Region (warehouse) parameters
   const [selectedRegion, setSelectedRegion] = useState(() => {
     return localStorage.getItem('vcl-selected-region') || null;
   });
 
   // Simulation parameters
   const [isSimulating, setIsSimulating] = useState(false);
-  const [tickInterval, setTickInterval] = useState(2000); // 2 seconds default
-  const [volatility, setVolatility] = useState('medium');
-  const [marketBias, setMarketBias] = useState('neutral');
-  const [alertThreshold, setAlertThreshold] = useState(0);
+  const [tickInterval, setTickInterval] = useState(3000); // 3 seconds default
+  const [consumptionRate, setConsumptionRate] = useState('medium');
+  const [restockMode, setRestockMode] = useState('manual');
+  const [reorderThreshold, setReorderThreshold] = useState(5);
   const [alertTriggered, setAlertTriggered] = useState(false);
+  const [alertItems, setAlertItems] = useState([]);
 
   // Interval reference
   const timerRef = useRef(null);
 
-  // Select/Change region node
+  // Select/Change warehouse region
   const handleSelectRegion = useCallback((region) => {
     setSelectedRegion(region);
     localStorage.setItem('vcl-selected-region', region);
     
-    // If we already have data loaded, regenerate it to fit the new region node
     if (dashboardData) {
       const name = dashboardData.kpi.fileName;
       const data = generateAllMockData(name, region);
       setDashboardData(data);
       setAlertTriggered(false);
+      setAlertItems([]);
     }
   }, [dashboardData]);
 
-  // Start real-time simulation immediately
+  // Start inventory simulation immediately
   const handleStartSimulation = useCallback(() => {
     setIsLoading(true);
     setActiveView('analytics');
     setAlertTriggered(false);
+    setAlertItems([]);
 
     setTimeout(() => {
-      const data = generateAllMockData('VCL_Live_Feed.xlsx', selectedRegion);
+      const data = generateAllMockData('VCL_Inventory.xlsx', selectedRegion);
       setDashboardData(data);
       setIsSimulating(false);
       setIsLoading(false);
     }, 1200);
   }, [selectedRegion]);
 
-  const handleFileProcessed = useCallback((file) => {
+  const handleFileProcessed = useCallback((file, parsedData) => {
     setIsLoading(true);
     setActiveView('analytics');
     setAlertTriggered(false);
+    setAlertItems([]);
 
-    // Simulate processing delay then populate with mock data
     setTimeout(() => {
-      const data = generateAllMockData(file.name, selectedRegion);
-      setDashboardData(data);
-      setIsSimulating(false);
-      setIsLoading(false);
-    }, 1800);
+      try {
+        let data;
+        if (parsedData && parsedData.rows && parsedData.rows.length > 0) {
+          // Use REAL parsed data from the uploaded file
+          data = transformParsedData(parsedData, file.name, selectedRegion);
+        } else {
+          // Fallback to mock data if parsing returned empty
+          data = generateAllMockData(file.name, selectedRegion);
+        }
+        setDashboardData(data);
+        setIsSimulating(false);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Data transform error:', err);
+        // Fallback to mock data on error
+        const data = generateAllMockData(file.name, selectedRegion);
+        setDashboardData(data);
+        setIsSimulating(false);
+        setIsLoading(false);
+      }
+    }, 800);
   }, [selectedRegion]);
 
   const handleNavigateToUpload = () => {
@@ -82,19 +101,27 @@ export default function App() {
     const freshData = generateAllMockData(name, selectedRegion);
     setDashboardData(freshData);
     setAlertTriggered(false);
+    setAlertItems([]);
   }, [dashboardData, selectedRegion]);
 
-  // Real-time ticking effect
+  // Real-time consumption tick effect
   useEffect(() => {
     if (isSimulating && dashboardData) {
       timerRef.current = setInterval(() => {
         setDashboardData(prev => {
-          const next = tickStockData(prev, { volatility, marketBias, nodeRegion: selectedRegion });
+          const next = tickInventoryData(prev, {
+            consumptionRate,
+            restockMode,
+            nodeRegion: selectedRegion,
+          });
           
-          // Check price alert threshold
-          if (alertThreshold > 0 && next.kpi.price >= alertThreshold && !alertTriggered) {
+          // Check for new out-of-stock items
+          const outOfStockItems = next.alerts?.filter(a => a.severity === 'critical') || [];
+          if (outOfStockItems.length > 0 && !alertTriggered) {
             setAlertTriggered(true);
+            setAlertItems(outOfStockItems.slice(0, 3));
           }
+
           return next;
         });
       }, tickInterval);
@@ -105,9 +132,9 @@ export default function App() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isSimulating, dashboardData, tickInterval, volatility, marketBias, alertThreshold, alertTriggered, selectedRegion]);
+  }, [isSimulating, dashboardData, tickInterval, consumptionRate, restockMode, alertTriggered, selectedRegion]);
 
-  // If no region node chosen, prompt user first
+  // If no warehouse chosen, prompt user first
   if (!selectedRegion) {
     return <RegionSelector onSelectRegion={handleSelectRegion} />;
   }
@@ -140,12 +167,12 @@ export default function App() {
             setIsSimulating={setIsSimulating}
             tickInterval={tickInterval}
             setTickInterval={setTickInterval}
-            volatility={volatility}
-            setVolatility={setVolatility}
-            marketBias={marketBias}
-            setMarketBias={setMarketBias}
-            alertThreshold={alertThreshold}
-            setAlertThreshold={setAlertThreshold}
+            consumptionRate={consumptionRate}
+            setConsumptionRate={setConsumptionRate}
+            restockMode={restockMode}
+            setRestockMode={setRestockMode}
+            reorderThreshold={reorderThreshold}
+            setReorderThreshold={setReorderThreshold}
             onResetData={handleResetData}
             tableData={dashboardData?.table || []}
             selectedRegion={selectedRegion}
@@ -170,8 +197,8 @@ export default function App() {
       <Sidebar activeView={activeView} onNavigate={setActiveView} />
       <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
         
-        {/* Floating Alert Warning Notification */}
-        {alertTriggered && (
+        {/* Floating Out-of-Stock Alert Notification */}
+        {alertTriggered && alertItems.length > 0 && (
           <div className="fixed top-20 right-4 z-50 max-w-sm rounded-2xl border p-4 shadow-xl backdrop-blur-md animate-scale-in flex items-start gap-3"
             style={{ 
               backgroundColor: 'var(--color-bg-secondary)', 
@@ -183,10 +210,17 @@ export default function App() {
             </div>
             <div className="flex-1">
               <h4 className="text-xs font-bold text-red-500 uppercase tracking-wide">
-                Price Alert Triggered
+                Stock Alert — Refill Needed!
               </h4>
-              <p className="text-xs font-semibold mt-0.5" style={{ color: 'var(--color-text-primary)' }}>
-                VCL Stock price crossed your target threshold of ${alertThreshold?.toFixed(2)} (Current: ${dashboardData?.kpi.price.toFixed(2)})
+              <div className="mt-1 space-y-0.5">
+                {alertItems.map((item, i) => (
+                  <p key={i} className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                    ⚠ {item.name} is <span className="text-red-500 font-bold">OUT OF STOCK</span>
+                  </p>
+                ))}
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                Go to Settings → enable Auto-Refill or restock manually
               </p>
             </div>
             <button 

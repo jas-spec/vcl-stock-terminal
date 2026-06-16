@@ -11,8 +11,10 @@ import {
   CheckCircle, 
   Sparkles,
   MapPin,
-  Landmark,
-  Navigation
+  Warehouse,
+  Navigation,
+  Package,
+  RotateCcw,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -21,19 +23,19 @@ export default function Settings({
   setIsSimulating,
   tickInterval,
   setTickInterval,
-  volatility,
-  setVolatility,
-  marketBias,
-  setMarketBias,
-  alertThreshold,
-  setAlertThreshold,
+  consumptionRate,
+  setConsumptionRate,
+  restockMode,
+  setRestockMode,
+  reorderThreshold,
+  setReorderThreshold,
   onResetData,
   tableData,
   selectedRegion,
-  onChangeRegion
+  onChangeRegion,
 }) {
   const { accentColor, setAccentColor, isDark } = useTheme();
-  const [alertConfigured, setAlertConfigured] = useState(false);
+  const [thresholdConfigured, setThresholdConfigured] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
   // Accent colors config
@@ -49,32 +51,33 @@ export default function Settings({
   const handleExportCSV = () => {
     if (!tableData || tableData.length === 0) return;
     
-    // Headers
-    const headers = ['Transaction ID', 'Time Stamp', 'Trader', 'Type', 'Region', 'Amount (USD)', 'Quantity', 'Status'];
+    const headers = ['Item ID', 'Product', 'Category', 'Supplier', 'Warehouse', 'Unit', 'Quantity', 'Drums', 'Reorder Level', 'Price/Unit (₹)', 'Total Value (₹)', 'Status', 'Last Updated'];
     
-    // Convert rows
     const rows = tableData.map(row => [
       row.id,
-      row.time,
-      row.trader,
-      row.type,
-      row.region,
-      row.amount,
+      row.name,
+      row.category || '',
+      row.supplier || '',
+      row.warehouse || '',
+      row.unit || '',
       row.quantity,
-      row.status
+      row.drums || 0,
+      row.reorderLevel,
+      row.pricePerUnit,
+      row.totalValue,
+      row.status,
+      row.lastUpdated || '',
     ]);
     
-    // Format csv
     const csvContent = [headers, ...rows]
       .map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
       .join('\n');
       
-    // Create Blob & Trigger Download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `VCL_Stock_${selectedRegion}_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute('download', `VCL_Inventory_${selectedRegion}_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -83,10 +86,10 @@ export default function Settings({
     setTimeout(() => setExportSuccess(false), 3000);
   };
 
-  const handleSaveAlert = (e) => {
+  const handleSaveThreshold = (e) => {
     e.preventDefault();
-    setAlertConfigured(true);
-    setTimeout(() => setAlertConfigured(false), 4000);
+    setThresholdConfigured(true);
+    setTimeout(() => setThresholdConfigured(false), 4000);
   };
 
   return (
@@ -97,14 +100,14 @@ export default function Settings({
           System Configuration
         </h2>
         <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-          Manage real-time ticking parameters, regional gateways, and branding accents.
+          Manage inventory simulation, warehouse settings, and alert thresholds.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Column: Live Simulation Controls */}
+        {/* Left Column: Simulation Controls */}
         <div className="space-y-6">
-          {/* Feed Switch */}
+          {/* Simulation Toggle */}
           <div className="rounded-2xl p-5 border"
             style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
             <div className="flex items-center gap-3 mb-4">
@@ -114,10 +117,10 @@ export default function Settings({
               </div>
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  Simulation Controls
+                  Consumption Simulation
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  Start/Stop real-time price & volume updates
+                  Start/Stop simulated inventory consumption over time
                 </p>
               </div>
             </div>
@@ -135,11 +138,11 @@ export default function Settings({
               >
                 {isSimulating ? (
                   <>
-                    <Pause size={14} /> Pause Tick Feed
+                    <Pause size={14} /> Pause Consumption
                   </>
                 ) : (
                   <>
-                    <Play size={14} /> Start Tick Feed
+                    <Play size={14} /> Start Consumption
                   </>
                 )}
               </button>
@@ -154,12 +157,12 @@ export default function Settings({
                   color: 'var(--color-text-primary)'
                 }}
               >
-                <RefreshCw size={14} /> Reset Data
+                <RefreshCw size={14} /> Reset Inventory
               </button>
             </div>
           </div>
 
-          {/* Volatility & Bias */}
+          {/* Consumption Rate & Restock Mode */}
           <div className="rounded-2xl p-5 border space-y-4"
             style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
             <div className="flex items-center gap-3">
@@ -169,30 +172,30 @@ export default function Settings({
               </div>
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  Market Characteristics
+                  Consumption Settings
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  Adjust simulated price volatility and direction trend
+                  Control how fast items are consumed and restocking behaviour
                 </p>
               </div>
             </div>
 
-            {/* Volatility Select */}
+            {/* Consumption Rate */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
-                Volatility Index (Random Walk Delta)
+                Consumption Speed
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {['low', 'medium', 'high'].map(v => (
+                {['slow', 'medium', 'fast'].map(v => (
                   <button
                     key={v}
-                    id={`volatility-btn-${v}`}
-                    onClick={() => setVolatility(v)}
+                    id={`consumption-btn-${v}`}
+                    onClick={() => setConsumptionRate(v)}
                     className="py-2 rounded-xl text-xs font-semibold capitalize border cursor-pointer transition-all duration-150"
                     style={{
-                      backgroundColor: volatility === v ? 'var(--color-accent-soft)' : 'transparent',
-                      borderColor: volatility === v ? 'var(--color-accent)' : 'var(--color-border)',
-                      color: volatility === v ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      backgroundColor: consumptionRate === v ? 'var(--color-accent-soft)' : 'transparent',
+                      borderColor: consumptionRate === v ? 'var(--color-accent)' : 'var(--color-border)',
+                      color: consumptionRate === v ? 'var(--color-accent)' : 'var(--color-text-secondary)',
                     }}
                   >
                     {v}
@@ -201,25 +204,29 @@ export default function Settings({
               </div>
             </div>
 
-            {/* Market Bias Select */}
+            {/* Restock Mode */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
-                Market Bias Trend
+                Restocking Mode
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {['neutral', 'bullish', 'bearish'].map(b => (
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'manual', label: 'Manual Restock', icon: Package },
+                  { id: 'auto', label: 'Auto-Refill', icon: RotateCcw },
+                ].map(mode => (
                   <button
-                    key={b}
-                    id={`bias-btn-${b}`}
-                    onClick={() => setMarketBias(b)}
-                    className="py-2 rounded-xl text-xs font-semibold capitalize border cursor-pointer transition-all duration-150"
+                    key={mode.id}
+                    id={`restock-btn-${mode.id}`}
+                    onClick={() => setRestockMode(mode.id)}
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer transition-all duration-150"
                     style={{
-                      backgroundColor: marketBias === b ? 'var(--color-accent-soft)' : 'transparent',
-                      borderColor: marketBias === b ? 'var(--color-accent)' : 'var(--color-border)',
-                      color: marketBias === b ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      backgroundColor: restockMode === mode.id ? 'var(--color-accent-soft)' : 'transparent',
+                      borderColor: restockMode === mode.id ? 'var(--color-accent)' : 'var(--color-border)',
+                      color: restockMode === mode.id ? 'var(--color-accent)' : 'var(--color-text-secondary)',
                     }}
                   >
-                    {b}
+                    <mode.icon size={13} />
+                    {mode.label}
                   </button>
                 ))}
               </div>
@@ -228,14 +235,14 @@ export default function Settings({
             {/* Tick Speed Slider */}
             <div className="space-y-1.5 pt-2">
               <div className="flex justify-between text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
-                <span>Tick Feed Interval</span>
+                <span>Simulation Interval</span>
                 <span style={{ color: 'var(--color-accent)' }}>{(tickInterval / 1000).toFixed(1)}s</span>
               </div>
               <input
                 id="speed-slider"
                 type="range"
-                min="500"
-                max="5000"
+                min="1000"
+                max="8000"
                 step="500"
                 value={tickInterval}
                 onChange={e => setTickInterval(Number(e.target.value))}
@@ -246,9 +253,9 @@ export default function Settings({
           </div>
         </div>
 
-        {/* Right Column: Alerts & Region Node Selector */}
+        {/* Right Column: Alerts & Warehouse Selector */}
         <div className="space-y-6">
-          {/* Region Node Selector */}
+          {/* Warehouse Selector */}
           <div className="rounded-2xl p-5 border space-y-4"
             style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
             <div className="flex items-center gap-3">
@@ -258,10 +265,10 @@ export default function Settings({
               </div>
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  Regional Gateway Node
+                  Warehouse Location
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  Switch connection node for Mumbai and Gujarat nodes
+                  Switch between Mumbai and Gujarat warehouse data
                 </p>
               </div>
             </div>
@@ -277,8 +284,8 @@ export default function Settings({
                   color: selectedRegion === 'mumbai' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
                 }}
               >
-                <Landmark size={14} style={{ color: selectedRegion === 'mumbai' ? 'var(--color-accent)' : 'var(--color-text-muted)' }} />
-                Mumbai Hub
+                <Warehouse size={14} style={{ color: selectedRegion === 'mumbai' ? 'var(--color-accent)' : 'var(--color-text-muted)' }} />
+                Mumbai Warehouse
               </button>
 
               <button
@@ -291,8 +298,8 @@ export default function Settings({
                   color: selectedRegion === 'gujarat' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
                 }}
               >
-                <Navigation size={14} style={{ color: selectedRegion === 'gujarat' ? '#10B981' : 'var(--color-text-muted)' }} />
-                Gujarat Node
+                <Warehouse size={14} style={{ color: selectedRegion === 'gujarat' ? '#10B981' : 'var(--color-text-muted)' }} />
+                Gujarat Warehouse
               </button>
             </div>
           </div>
@@ -339,7 +346,7 @@ export default function Settings({
             </div>
           </div>
 
-          {/* Stock Alerts System */}
+          {/* Reorder Level Alert Config */}
           <div className="rounded-2xl p-5 border space-y-4"
             style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
             <div className="flex items-center gap-3">
@@ -349,26 +356,27 @@ export default function Settings({
               </div>
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  VCL Threshold Alerts
+                  Reorder Level Alert
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  Trigger warnings when prices exceed defined limits
+                  Set minimum quantity threshold for low-stock warnings
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleSaveAlert} className="space-y-3">
+            <form onSubmit={handleSaveThreshold} className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex-1 relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold"
-                    style={{ color: 'var(--color-text-muted)' }}>$</span>
+                    style={{ color: 'var(--color-text-muted)' }}>≤</span>
                   <input
-                    id="alert-threshold-input"
+                    id="reorder-threshold-input"
                     type="number"
-                    step="0.01"
-                    placeholder="Alert value (e.g. 150.00)"
-                    value={alertThreshold || ''}
-                    onChange={e => setAlertThreshold(Number(e.target.value))}
+                    step="1"
+                    min="1"
+                    placeholder="Reorder level (e.g. 5)"
+                    value={reorderThreshold || ''}
+                    onChange={e => setReorderThreshold(Number(e.target.value))}
                     className="w-full pl-7 pr-4 py-2 text-xs rounded-xl outline-none font-medium border"
                     style={{
                       backgroundColor: 'var(--color-bg-tertiary)',
@@ -379,17 +387,17 @@ export default function Settings({
                 </div>
                 <button
                   type="submit"
-                  id="save-alert-btn"
+                  id="save-threshold-btn"
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer transition-all duration-200 hover:opacity-90"
                   style={{ backgroundColor: 'var(--color-accent)' }}
                 >
-                  Configure
+                  Set Alert
                 </button>
               </div>
-              {alertConfigured && (
+              {thresholdConfigured && (
                 <p className="text-xs font-medium flex items-center gap-1.5 animate-scale-in"
                   style={{ color: 'var(--color-success)' }}>
-                  <CheckCircle size={14} /> Limit alert active for VCL at ${alertThreshold?.toFixed(2)}
+                  <CheckCircle size={14} /> Alert active for items below {reorderThreshold} units
                 </p>
               )}
             </form>
@@ -403,10 +411,10 @@ export default function Settings({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--color-text-primary)' }}>
-              <Sparkles size={16} style={{ color: 'var(--color-accent)' }} /> Data Management Ledger
+              <Sparkles size={16} style={{ color: 'var(--color-accent)' }} /> Inventory Data Export
             </h3>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-              Export current simulated transaction log rows directly to CSV format.
+              Export current inventory ledger with quantities, values, and status to CSV format.
             </p>
           </div>
           <button
@@ -421,7 +429,7 @@ export default function Settings({
               </>
             ) : (
               <>
-                <FileSpreadsheet size={14} /> Export Table to CSV
+                <FileSpreadsheet size={14} /> Export Inventory CSV
               </>
             )}
           </button>

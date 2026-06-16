@@ -1,14 +1,51 @@
-// ── VCL Stock Simulation & Data Generator ──────────────────────
-// Generates baseline data and simulates real-time ticks for VCL Stock.
+// ── VCL Inventory Management — Data Generator & Simulation ──────────────
+// Generates realistic inventory data and simulates daily consumption/restocking.
 
-const ORDER_TYPES = ['Institutional', 'Retail Limit', 'HFT Algorithmic', 'Mutual Fund', 'Insider Trade'];
-const COMPANIES = ['VCL Group Inc.', 'VCL Capital', 'VCL Liquidity Partners'];
-const TRADERS = ['Apex Alpha', 'Genesis Asset', 'Quantum LP', 'Sentinel Trust', 'Vanguard Prime', 'Retail Trader'];
+const PRODUCT_CATEGORIES = ['Fruits', 'Vegetables', 'Dairy', 'Grains', 'Beverages'];
 
-// Sub-regions specific to chosen node gateway
-const SUB_REGIONS = {
-  mumbai: ['South Mumbai', 'Bandra-West', 'Andheri', 'Thane', 'Navi Mumbai', 'Borivali'],
-  gujarat: ['GIFT City', 'Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar']
+const PRODUCTS = {
+  Fruits: [
+    { name: 'Apple', unit: 'kg', pricePerUnit: 180 },
+    { name: 'Orange', unit: 'kg', pricePerUnit: 120 },
+    { name: 'Mango', unit: 'kg', pricePerUnit: 250 },
+    { name: 'Banana', unit: 'dozen', pricePerUnit: 60 },
+    { name: 'Grapes', unit: 'kg', pricePerUnit: 140 },
+    { name: 'Pomegranate', unit: 'kg', pricePerUnit: 200 },
+  ],
+  Vegetables: [
+    { name: 'Tomato', unit: 'kg', pricePerUnit: 40 },
+    { name: 'Onion', unit: 'kg', pricePerUnit: 35 },
+    { name: 'Potato', unit: 'kg', pricePerUnit: 30 },
+    { name: 'Capsicum', unit: 'kg', pricePerUnit: 80 },
+    { name: 'Spinach', unit: 'bundle', pricePerUnit: 25 },
+    { name: 'Carrot', unit: 'kg', pricePerUnit: 50 },
+  ],
+  Dairy: [
+    { name: 'Milk', unit: 'litre', pricePerUnit: 60 },
+    { name: 'Paneer', unit: 'kg', pricePerUnit: 350 },
+    { name: 'Curd', unit: 'kg', pricePerUnit: 55 },
+    { name: 'Butter', unit: 'pack', pricePerUnit: 55 },
+    { name: 'Cheese', unit: 'pack', pricePerUnit: 120 },
+  ],
+  Grains: [
+    { name: 'Rice', unit: 'kg', pricePerUnit: 65 },
+    { name: 'Wheat Flour', unit: 'kg', pricePerUnit: 45 },
+    { name: 'Dal (Toor)', unit: 'kg', pricePerUnit: 150 },
+    { name: 'Sugar', unit: 'kg', pricePerUnit: 42 },
+    { name: 'Salt', unit: 'kg', pricePerUnit: 20 },
+  ],
+  Beverages: [
+    { name: 'Tea Leaves', unit: 'pack', pricePerUnit: 220 },
+    { name: 'Coffee Powder', unit: 'pack', pricePerUnit: 350 },
+    { name: 'Mineral Water', unit: 'case', pricePerUnit: 180 },
+    { name: 'Juice (Mixed)', unit: 'litre', pricePerUnit: 90 },
+  ],
+};
+
+// Sub-warehouses per region
+const WAREHOUSES = {
+  mumbai: ['Andheri Hub', 'Navi Mumbai DC', 'Thane Store', 'Bandra Outlet', 'Borivali Unit', 'Dadar Central'],
+  gujarat: ['GIFT City DC', 'Ahmedabad Hub', 'Surat Store', 'Vadodara Unit', 'Rajkot Outlet', 'Gandhinagar Central'],
 };
 
 function rand(min, max) {
@@ -24,224 +61,268 @@ function pickRandom(arr) {
 }
 
 function generateId() {
-  return `TXN-${rand(100000, 999999)}`;
+  return `INV-${rand(100000, 999999)}`;
 }
 
-// Format current time as HH:MM:SS
-function getCurrentTimeString() {
-  const now = new Date();
-  return now.toTimeString().split(' ')[0];
+function getDateString(daysAgo = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 }
 
-// 1. Initial baseline generation
-export function generateStockHistory(points = 15) {
-  let basePrice = 145.50;
-  const data = [];
-  const now = new Date();
+function getFullDateString(daysAgo = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
-  for (let i = points - 1; i >= 0; i--) {
-    const timeOffset = new Date(now.getTime() - i * 5000); // 5s intervals
-    basePrice += randFloat(-0.8, 1.0);
-    data.push({
-      time: timeOffset.toTimeString().split(' ')[0],
-      price: parseFloat(basePrice.toFixed(2)),
-      volume: rand(5000, 25000),
-      avgPrice: parseFloat((basePrice + randFloat(-0.2, 0.2)).toFixed(2))
-    });
+// Determine stock status
+function getStockStatus(qty, reorderLevel) {
+  if (qty <= 0) return 'Out of Stock';
+  if (qty <= reorderLevel) return 'Low Stock';
+  if (qty > reorderLevel * 3) return 'Overstocked';
+  return 'In Stock';
+}
+
+// ── 1. Generate inventory table data ──────────────────────────────────
+export function generateInventoryTable(nodeRegion = 'mumbai') {
+  const warehouses = WAREHOUSES[nodeRegion] || WAREHOUSES.mumbai;
+  const items = [];
+
+  for (const [category, products] of Object.entries(PRODUCTS)) {
+    for (const product of products) {
+      const qty = rand(0, 50);
+      const reorderLevel = rand(5, 15);
+      items.push({
+        id: generateId(),
+        name: product.name,
+        category,
+        warehouse: pickRandom(warehouses),
+        unit: product.unit,
+        quantity: qty,
+        reorderLevel,
+        pricePerUnit: product.pricePerUnit,
+        totalValue: qty * product.pricePerUnit,
+        status: getStockStatus(qty, reorderLevel),
+        lastUpdated: getFullDateString(rand(0, 2)),
+      });
+    }
   }
-  return data;
+
+  return items;
 }
 
-export function generateDonutData() {
-  const values = ORDER_TYPES.map(() => rand(15, 35));
-  const total = values.reduce((a, b) => a + b, 0);
-  return ORDER_TYPES.map((name, i) => ({
-    name,
-    value: parseFloat(((values[i] / total) * 100).toFixed(1)),
-  }));
+// ── 2. Generate time series data (inventory levels over 7 days) ────────
+export function generateInventoryTimeSeries() {
+  const trackedProducts = ['Apple', 'Orange', 'Mango', 'Milk', 'Tomato'];
+  const days = [];
+
+  // Build backwards: day 7 → day 1 (today)
+  const productBaselines = {};
+  trackedProducts.forEach(p => {
+    productBaselines[p] = rand(20, 45);
+  });
+
+  for (let i = 6; i >= 0; i--) {
+    const point = { day: getDateString(i) };
+    trackedProducts.forEach(p => {
+      // Simulate gradual consumption with occasional restocking
+      const consumed = rand(1, 8);
+      const restocked = Math.random() > 0.7 ? rand(5, 15) : 0;
+      productBaselines[p] = Math.max(0, productBaselines[p] - consumed + restocked);
+      point[p] = productBaselines[p];
+    });
+    days.push(point);
+  }
+
+  return { data: days, products: trackedProducts };
 }
 
+// ── 3. Generate category summary data (for bar chart) ──────────────────
 export function generateCategoryData(nodeRegion = 'mumbai') {
-  const regions = SUB_REGIONS[nodeRegion] || SUB_REGIONS.mumbai;
-  return regions.map(name => ({
+  return PRODUCT_CATEGORIES.map(cat => {
+    const products = PRODUCTS[cat] || [];
+    const totalQty = products.reduce((sum) => sum + rand(10, 80), 0);
+    return {
+      name: cat,
+      value: totalQty,
+      products: products.length,
+    };
+  });
+}
+
+// ── 4. Generate stock status distribution (for donut chart) ────────────
+export function generateStatusDistribution(tableData) {
+  const counts = { 'In Stock': 0, 'Low Stock': 0, 'Out of Stock': 0, 'Overstocked': 0 };
+  tableData.forEach(item => {
+    if (counts[item.status] !== undefined) counts[item.status]++;
+  });
+  const total = tableData.length || 1;
+  return Object.entries(counts).map(([name, count]) => ({
     name,
-    value: rand(150000, 850000),
-    growth: randFloat(-3.5, 6.2),
+    value: parseFloat(((count / total) * 100).toFixed(1)),
+    count,
   }));
 }
 
-export function generateScatterData() {
-  return Array.from({ length: 40 }, () => {
-    const offset = randFloat(-2.5, 2.5);
-    return {
-      x: parseFloat(offset.toFixed(2)), // price offset from current price
-      y: rand(10, 500), // quantity of orders
-      z: rand(50, 150),
-      category: pickRandom(['Bids', 'Asks', 'Stop Orders']),
-    };
-  });
+// ── 5. Generate scatter data (quantity vs reorder level) ───────────────
+export function generateScatterData(tableData) {
+  return tableData.map(item => ({
+    x: item.quantity,
+    y: item.reorderLevel,
+    z: rand(40, 140),
+    name: item.name,
+    category: item.status === 'Out of Stock' ? 'Needs Reorder'
+            : item.status === 'Low Stock' ? 'Needs Reorder'
+            : item.quantity > item.reorderLevel * 3 ? 'Overstocked'
+            : 'Adequate',
+  }));
 }
 
-export function generateTableData(rows = 30, nodeRegion = 'mumbai') {
-  const now = new Date();
-  const regions = SUB_REGIONS[nodeRegion] || SUB_REGIONS.mumbai;
-  return Array.from({ length: rows }, (_, i) => {
-    const timeOffset = new Date(now.getTime() - i * 3000);
-    const amount = randFloat(100, 50000);
-    const qty = rand(10, 500);
-    return {
-      id: generateId(),
-      time: timeOffset.toTimeString().split(' ')[0],
-      trader: pickRandom(TRADERS),
-      type: pickRandom(ORDER_TYPES),
-      region: pickRandom(regions),
-      amount: parseFloat(amount.toFixed(2)),
-      quantity: qty,
-      status: pickRandom(['Completed', 'Pending', 'Processing']),
-    };
-  });
-}
+// ── 6. KPI summary ────────────────────────────────────────────────────
+export function generateKPI(tableData, fileName = 'VCL_Inventory.xlsx') {
+  const totalItems = tableData.length;
+  const outOfStock = tableData.filter(i => i.quantity <= 0).length;
+  const lowStock = tableData.filter(i => i.status === 'Low Stock').length;
+  const totalValue = tableData.reduce((sum, i) => sum + i.totalValue, 0);
+  const totalQuantity = tableData.reduce((sum, i) => sum + i.quantity, 0);
 
-export function generateAllMockData(fileName = 'VCL_Live_Feed.xlsx', nodeRegion = 'mumbai') {
-  const initialHistory = generateStockHistory(15);
-  const currentPrice = initialHistory[initialHistory.length - 1].price;
-  
   return {
-    kpi: {
-      price: currentPrice,
-      volume: 1245900,
-      volatility: 1.25,
-      change: 1.85,
-      prevPrice: currentPrice - 2.50,
-      fileName,
-    },
-    timeSeries: initialHistory,
-    categories: generateCategoryData(nodeRegion),
-    donut: generateDonutData(),
-    scatter: generateScatterData(),
-    table: generateTableData(30, nodeRegion),
+    totalItems,
+    outOfStock,
+    lowStock,
+    totalValue,
+    totalQuantity,
+    fileName,
+    outOfStockChange: outOfStock > 2 ? outOfStock - 2 : -1,
+    lowStockChange: lowStock > 3 ? lowStock - 3 : -2,
+    valueChange: randFloat(-3.5, 4.5),
+    quantityChange: randFloat(-5, 3),
   };
 }
 
-// 2. Real-time tick simulator
-export function tickStockData(prevData, config = {}) {
+// ── 7. Generate alerts for out-of-stock and low-stock items ────────────
+export function generateAlerts(tableData) {
+  const critical = tableData.filter(i => i.quantity <= 0).map(i => ({
+    id: i.id,
+    name: i.name,
+    category: i.category,
+    warehouse: i.warehouse,
+    severity: 'critical',
+    message: `${i.name} is OUT OF STOCK! Refill needed immediately.`,
+  }));
+
+  const warning = tableData.filter(i => i.status === 'Low Stock').map(i => ({
+    id: i.id,
+    name: i.name,
+    category: i.category,
+    warehouse: i.warehouse,
+    quantity: i.quantity,
+    reorderLevel: i.reorderLevel,
+    severity: 'warning',
+    message: `${i.name} is running low (${i.quantity} ${i.unit} left, reorder at ${i.reorderLevel}).`,
+  }));
+
+  return [...critical, ...warning];
+}
+
+// ── 8. Master generator ───────────────────────────────────────────────
+export function generateAllMockData(fileName = 'VCL_Inventory.xlsx', nodeRegion = 'mumbai') {
+  const table = generateInventoryTable(nodeRegion);
+  const timeSeries = generateInventoryTimeSeries();
+  const categories = generateCategoryData(nodeRegion);
+  const donut = generateStatusDistribution(table);
+  const scatter = generateScatterData(table);
+  const kpi = generateKPI(table, fileName);
+  const alerts = generateAlerts(table);
+
+  return {
+    kpi,
+    timeSeries,
+    categories,
+    donut,
+    scatter,
+    table,
+    alerts,
+  };
+}
+
+// ── 9. Consumption tick simulator ──────────────────────────────────────
+// Simulates items being consumed/sold over time; some items deplete to 0.
+export function tickInventoryData(prevData, config = {}) {
   if (!prevData) return generateAllMockData();
 
   const {
-    volatility = 'medium', // low | medium | high
-    marketBias = 'neutral', // bullish | bearish | neutral
+    consumptionRate = 'medium', // slow | medium | fast
+    restockMode = 'manual',    // manual | auto
     nodeRegion = 'mumbai'
   } = config;
 
-  const regions = SUB_REGIONS[nodeRegion] || SUB_REGIONS.mumbai;
+  // Consumption amounts per tick
+  let maxConsume = 3;
+  if (consumptionRate === 'slow') maxConsume = 1;
+  if (consumptionRate === 'fast') maxConsume = 6;
 
-  // Compute variance range based on volatility settings
-  let maxChange = 0.5; // medium
-  if (volatility === 'low') maxChange = 0.15;
-  if (volatility === 'high') maxChange = 1.35;
+  // Update table: consume random amounts from each item
+  const newTable = prevData.table.map(item => {
+    const consumed = rand(0, maxConsume);
+    let newQty = Math.max(0, item.quantity - consumed);
 
-  // Add bias to random walk
-  let bias = 0;
-  if (marketBias === 'bullish') bias = maxChange * 0.25;
-  if (marketBias === 'bearish') bias = -maxChange * 0.25;
+    // Auto-restock if enabled and item hits 0
+    if (restockMode === 'auto' && newQty <= 0) {
+      newQty = rand(15, 40);
+    }
 
-  const rawChange = randFloat(-maxChange, maxChange) + bias;
-  
-  // Update Live Price
-  const lastPrice = prevData.kpi.price;
-  const newPrice = Math.max(10.0, parseFloat((lastPrice + rawChange).toFixed(2)));
-  const priceDirection = newPrice >= lastPrice ? 'up' : 'down';
-  
-  // Calculate new percentage change compared to a fixed daily open of $142.50
-  const dailyOpen = 142.50;
-  const newChangePercent = parseFloat((((newPrice - dailyOpen) / dailyOpen) * 100).toFixed(2));
+    const newTotalValue = newQty * item.pricePerUnit;
+    const newStatus = getStockStatus(newQty, item.reorderLevel);
 
-  // Add trade volume
-  const addedVolume = rand(500, 8000);
-  const newVolume = prevData.kpi.volume + addedVolume;
-
-  // Volatility fluctuation
-  const vFluc = randFloat(-0.08, 0.08);
-  const newVolatility = Math.max(0.1, parseFloat((prevData.kpi.volatility + vFluc).toFixed(2)));
-
-  // 1. Line Chart Tick (push new price point, shift old point)
-  const currentTime = getCurrentTimeString();
-  const newTimeSeries = [...prevData.timeSeries];
-  newTimeSeries.push({
-    time: currentTime,
-    price: newPrice,
-    volume: addedVolume,
-    avgPrice: parseFloat(((newTimeSeries.slice(-5).reduce((acc, curr) => acc + curr.price, 0) + newPrice) / 6).toFixed(2))
-  });
-  if (newTimeSeries.length > 18) {
-    newTimeSeries.shift();
-  }
-
-  // 2. Fluctuate Donut Data slightly
-  const newDonut = prevData.donut.map(item => {
-    const delta = randFloat(-1.5, 1.5);
     return {
       ...item,
-      value: Math.max(1.0, parseFloat((item.value + delta).toFixed(1)))
+      quantity: newQty,
+      totalValue: newTotalValue,
+      status: newStatus,
+      lastUpdated: getFullDateString(0),
     };
   });
-  // Normalize donut values to 100%
-  const donutSum = newDonut.reduce((sum, d) => sum + d.value, 0);
-  const normalizedDonut = newDonut.map(d => ({
-    ...d,
-    value: parseFloat(((d.value / donutSum) * 100).toFixed(1))
-  }));
 
-  // 3. Fluctuate Category Sales Volumes slightly
-  const newCategories = prevData.categories.map(item => {
-    const flucPercent = randFloat(-0.02, 0.03);
-    const newValue = Math.max(50000, Math.round(item.value * (1 + flucPercent)));
+  // Recompute everything from updated table
+  const newKpi = generateKPI(newTable, prevData.kpi.fileName);
+  const newDonut = generateStatusDistribution(newTable);
+  const newScatter = generateScatterData(newTable);
+  const newAlerts = generateAlerts(newTable);
+
+  // Update time series: add new point for "now"
+  const ts = prevData.timeSeries;
+  const trackedProducts = ts.products;
+  const newTimeData = [...ts.data];
+  const now = new Date();
+  const timeLabel = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const newPoint = { day: timeLabel };
+
+  trackedProducts.forEach(productName => {
+    const item = newTable.find(i => i.name === productName);
+    newPoint[productName] = item ? item.quantity : 0;
+  });
+
+  newTimeData.push(newPoint);
+  if (newTimeData.length > 15) newTimeData.shift();
+
+  // Slightly fluctuate category totals
+  const newCategories = prevData.categories.map(cat => {
+    const delta = rand(-5, 3);
     return {
-      ...item,
-      value: newValue,
-      growth: parseFloat((item.growth + randFloat(-0.2, 0.2)).toFixed(2))
+      ...cat,
+      value: Math.max(10, cat.value + delta),
     };
   });
-
-  // 4. Update order book scatter bids/asks
-  const newScatter = prevData.scatter.map(pt => {
-    // shift offset slightly
-    const offsetChange = randFloat(-0.1, 0.1);
-    const newQty = Math.max(5, pt.y + rand(-15, 15));
-    return {
-      ...pt,
-      x: parseFloat((pt.x + offsetChange).toFixed(2)),
-      y: newQty
-    };
-  });
-
-  // 5. Append new transaction to DataGrid Table
-  const newTxn = {
-    id: generateId(),
-    time: currentTime,
-    trader: pickRandom(TRADERS),
-    type: pickRandom(ORDER_TYPES),
-    region: pickRandom(regions),
-    amount: parseFloat((newPrice * rand(10, 150)).toFixed(2)),
-    quantity: rand(10, 200),
-    status: pickRandom(['Completed', 'Pending', 'Processing']),
-  };
-  const newTable = [newTxn, ...prevData.table].slice(0, 45); // cap at 45 rows to keep DOM fast
 
   return {
-    kpi: {
-      price: newPrice,
-      volume: newVolume,
-      volatility: newVolatility,
-      change: newChangePercent,
-      prevPrice: lastPrice,
-      priceDirection, // 'up' | 'down'
-      fileName: prevData.kpi.fileName,
-    },
-    timeSeries: newTimeSeries,
+    kpi: newKpi,
+    timeSeries: { data: newTimeData, products: trackedProducts },
     categories: newCategories,
-    donut: normalizedDonut,
+    donut: newDonut,
     scatter: newScatter,
     table: newTable,
+    alerts: newAlerts,
   };
 }

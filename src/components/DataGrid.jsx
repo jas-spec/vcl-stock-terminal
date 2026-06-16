@@ -1,69 +1,82 @@
 import { useState, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 const ROWS_PER_PAGE = 8;
 
 const STATUS_STYLES = {
-  Completed: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
-  Pending: { bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
-  Processing: { bg: 'rgba(99, 102, 241, 0.1)', color: '#6366F1' },
+  'In Stock': { bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+  'Low Stock': { bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
+  'Out of Stock': { bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' },
+  'Overstocked': { bg: 'rgba(99, 102, 241, 0.1)', color: '#6366F1' },
 };
 
-const COLUMN_LABELS = {
-  id: 'Transaction ID',
-  time: 'Time Stamp',
-  trader: 'Trader Entity',
-  type: 'Order Type',
-  region: 'Region',
-  amount: 'Amount (USD)',
-  quantity: 'Qty',
-  status: 'Status',
-};
+function StatusBadge({ status }) {
+  const style = STATUS_STYLES[status] || STATUS_STYLES['In Stock'];
+  return (
+    <span
+      className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide whitespace-nowrap"
+      style={{ backgroundColor: style.bg, color: style.color }}
+    >
+      {status}
+    </span>
+  );
+}
 
 export default function DataGrid({ data }) {
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [sortKey, setSortKey] = useState('time');
-  const [sortDir, setSortDir] = useState('desc');
+  const [sortKey, setSortKey] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
+  const [page, setPage] = useState(0);
 
-  const columns = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    return Object.keys(data[0]).filter(k => k !== 'prevPrice' && k !== 'priceDirection');
-  }, [data]);
+  // Dynamically build columns based on what data is available
+  const hasDrums = data?.some(r => r.drums > 0);
+  const hasSupplier = data?.some(r => r.supplier && r.supplier.trim() !== '');
+
+  const columns = [
+    { key: 'id', label: 'Item ID', width: '100px' },
+    { key: 'name', label: 'Product', width: '140px' },
+    ...(hasSupplier
+      ? [{ key: 'supplier', label: 'Supplier', width: '140px' }]
+      : [{ key: 'category', label: 'Category', width: '100px' }]
+    ),
+    { key: 'quantity', label: 'Qty', width: '70px' },
+    ...(hasDrums ? [{ key: 'drums', label: 'Drums', width: '70px' }] : []),
+    { key: 'reorderLevel', label: 'Reorder Lvl', width: '90px' },
+    { key: 'totalValue', label: 'Value (₹)', width: '100px' },
+    { key: 'status', label: 'Status', width: '110px' },
+  ];
 
   const filtered = useMemo(() => {
     if (!data) return [];
-    if (!search.trim()) return data;
-    const q = search.toLowerCase();
-    return data.filter(row =>
-      Object.entries(row).some(([key, val]) =>
-        key !== 'prevPrice' && key !== 'priceDirection' && String(val).toLowerCase().includes(q)
-      )
-    );
-  }, [data, search]);
+    let result = [...data];
 
-  const sorted = useMemo(() => {
-    if (!sortKey) return filtered;
-    return [...filtered].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      return sortDir === 'asc'
-        ? String(aVal).localeCompare(String(bVal))
-        : String(bVal).localeCompare(String(aVal));
-    });
-  }, [filtered, sortKey, sortDir]);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(row =>
+        Object.values(row).some(v =>
+          String(v).toLowerCase().includes(q)
+        )
+      );
+    }
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / ROWS_PER_PAGE));
-  
-  // Safe page indexing
-  const currentPage = Math.min(page, totalPages);
-  const pageData = useMemo(() => {
-    const start = (currentPage - 1) * ROWS_PER_PAGE;
-    return sorted.slice(start, start + ROWS_PER_PAGE);
-  }, [sorted, currentPage]);
+    if (sortKey) {
+      result.sort((a, b) => {
+        const aVal = a[sortKey];
+        const bVal = b[sortKey];
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        return sortDir === 'asc'
+          ? String(aVal).localeCompare(String(bVal))
+          : String(bVal).localeCompare(String(aVal));
+      });
+    }
+
+    return result;
+  }, [data, search, sortKey, sortDir]);
+
+  const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  const pageData = filtered.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -72,119 +85,138 @@ export default function DataGrid({ data }) {
       setSortKey(key);
       setSortDir('asc');
     }
-    setPage(1);
   };
 
-  const handleSearch = (value) => {
-    setSearch(value);
-    setPage(1);
-  };
-
-  if (!data || data.length === 0) {
-    return (
-      <div className="rounded-2xl p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-[#131825]">
-        <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-slate-400" />
-        <p className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
-          Awaiting live transaction data stream...
-        </p>
-      </div>
-    );
-  }
+  if (!data || data.length === 0) return null;
 
   return (
-    <div className="rounded-2xl overflow-hidden animate-fade-in-up"
+    <div
+      className="rounded-2xl overflow-hidden animate-fade-in-up"
       style={{
         backgroundColor: 'var(--color-bg-secondary)',
         border: '1px solid var(--color-border)',
         boxShadow: 'var(--shadow-sm)',
-      }}>
+      }}
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5"
-        style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 pb-3">
         <div>
           <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            Order Book & Transaction Ledger
+            Inventory Ledger
           </h3>
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-            Showing {filtered.length} of {data.length} active transactions
+            {filtered.length} product{filtered.length !== 1 ? 's' : ''} tracked across all warehouses
           </p>
         </div>
         <div className="relative w-full sm:w-64">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2"
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
             style={{ color: 'var(--color-text-muted)' }} />
           <input
-            id="data-grid-search"
+            id="inventory-search"
             type="text"
-            placeholder="Search transactions..."
+            placeholder="Search products..."
             value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-sm font-medium outline-none transition-all duration-200"
+            onChange={e => { setSearch(e.target.value); setPage(0); }}
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl outline-none font-medium border transition-colors"
             style={{
               backgroundColor: 'var(--color-bg-tertiary)',
               color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border)',
+              borderColor: 'var(--color-border)',
             }}
-            onFocus={(e) => { e.target.style.borderColor = 'var(--color-accent)'; e.target.style.boxShadow = 'var(--shadow-glow)'; }}
-            onBlur={(e) => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
           />
         </div>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px]">
+        <table className="w-full text-xs" style={{ minWidth: '700px' }}>
           <thead>
-            <tr style={{ backgroundColor: 'var(--color-bg-tertiary)' }}>
+            <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
               {columns.map(col => (
                 <th
-                  key={col}
-                  onClick={() => handleSort(col)}
-                  className="text-left text-xs font-semibold uppercase tracking-wider px-5 py-3 cursor-pointer select-none transition-colors duration-200"
-                  style={{ color: 'var(--color-text-muted)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+                  key={col.key}
+                  className="px-5 py-3 text-left font-semibold cursor-pointer select-none group transition-colors"
+                  style={{
+                    color: 'var(--color-text-muted)',
+                    width: col.width,
+                    backgroundColor: 'var(--color-bg-tertiary)',
+                  }}
+                  onClick={() => handleSort(col.key)}
                 >
-                  <div className="flex items-center gap-1.5">
-                    {COLUMN_LABELS[col] || col}
-                    <ArrowUpDown size={12} className={sortKey === col ? 'opacity-100' : 'opacity-30'} />
+                  <div className="flex items-center gap-1">
+                    {col.label}
+                    <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {pageData.map((row, idx) => (
+            {pageData.map((row, i) => (
               <tr
-                key={row.id || idx}
-                className="transition-colors duration-150 animate-fade-in"
+                key={row.id + i}
+                className="transition-colors duration-150"
                 style={{ borderBottom: '1px solid var(--color-border)' }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)'; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
-                {columns.map(col => (
-                  <td key={col} className="px-5 py-3.5 text-sm"
-                    style={{ color: 'var(--color-text-secondary)' }}>
-                    {col === 'status' ? (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold"
-                        style={{
-                          backgroundColor: STATUS_STYLES[row[col]]?.bg || 'var(--color-bg-tertiary)',
-                          color: STATUS_STYLES[row[col]]?.color || 'var(--color-text-secondary)',
-                        }}>
-                        {row[col]}
-                      </span>
-                    ) : col === 'amount' ? (
-                      <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                        ${Number(row[col]).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </span>
-                    ) : col === 'id' ? (
-                      <span className="font-mono text-xs font-bold" style={{ color: 'var(--color-accent)' }}>
-                        {row[col]}
-                      </span>
-                    ) : (
-                      row[col]
-                    )}
-                  </td>
-                ))}
+                {columns.map(col => {
+                  const val = row[col.key];
+                  
+                  // ID column
+                  if (col.key === 'id') {
+                    return (
+                      <td key={col.key} className="px-5 py-3 font-mono font-semibold" style={{ color: 'var(--color-accent)' }}>
+                        {val}
+                      </td>
+                    );
+                  }
+                  
+                  // Name/Product column
+                  if (col.key === 'name') {
+                    return (
+                      <td key={col.key} className="px-5 py-3 font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                        {val}
+                      </td>
+                    );
+                  }
+                  
+                  // Quantity column (color-coded)
+                  if (col.key === 'quantity') {
+                    return (
+                      <td key={col.key} className="px-5 py-3 font-bold" style={{
+                        color: val <= 0 ? '#EF4444' : val <= row.reorderLevel ? '#F59E0B' : 'var(--color-text-primary)'
+                      }}>
+                        {val}
+                      </td>
+                    );
+                  }
+                  
+                  // Value column (₹)
+                  if (col.key === 'totalValue') {
+                    return (
+                      <td key={col.key} className="px-5 py-3 font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                        ₹{Number(val).toLocaleString('en-IN')}
+                      </td>
+                    );
+                  }
+                  
+                  // Status column (badge)
+                  if (col.key === 'status') {
+                    return (
+                      <td key={col.key} className="px-5 py-3">
+                        <StatusBadge status={val} />
+                      </td>
+                    );
+                  }
+                  
+                  // Default text column
+                  return (
+                    <td key={col.key} className="px-5 py-3" style={{ color: 'var(--color-text-secondary)' }}>
+                      {val}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -192,45 +224,37 @@ export default function DataGrid({ data }) {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-5 py-4"
+      <div className="flex items-center justify-between px-5 py-3"
         style={{ borderTop: '1px solid var(--color-border)' }}>
         <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
-          Page {currentPage} of {totalPages}
+          Page {page + 1} of {totalPages || 1}
         </p>
         <div className="flex items-center gap-2">
           <button
-            id="data-grid-prev"
-            disabled={currentPage <= 1}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="p-2 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}
+            id="grid-prev-page"
+            onClick={() => setPage(Math.max(0, page - 1))}
+            disabled={page === 0}
+            className="p-1.5 rounded-lg border cursor-pointer transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+              backgroundColor: 'var(--color-bg-tertiary)',
+            }}
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={14} />
           </button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const pageNum = i + 1;
-            return (
-              <button
-                key={pageNum}
-                onClick={() => setPage(pageNum)}
-                className="w-8 h-8 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
-                style={{
-                  backgroundColor: currentPage === pageNum ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
-                  color: currentPage === pageNum ? '#FFFFFF' : 'var(--color-text-secondary)',
-                }}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
           <button
-            id="data-grid-next"
-            disabled={currentPage >= totalPages}
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            className="p-2 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}
+            id="grid-next-page"
+            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+            disabled={page >= totalPages - 1}
+            className="p-1.5 rounded-lg border cursor-pointer transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+              backgroundColor: 'var(--color-bg-tertiary)',
+            }}
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={14} />
           </button>
         </div>
       </div>

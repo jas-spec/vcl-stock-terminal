@@ -8,52 +8,66 @@ export default function VclLogo({ className = "w-8 h-8" }) {
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* V segment */}
+      {/* Package box base */}
       <path 
-        d="M20 25L45 80L55 58" 
-        stroke="url(#vcl-grad-v)" 
-        strokeWidth="12" 
-        strokeLinecap="round" 
+        d="M15 38L50 20L85 38L85 75L50 93L15 75Z" 
+        stroke="url(#vcl-inv-grad-box)" 
+        strokeWidth="6" 
         strokeLinejoin="round" 
+        fill="url(#vcl-inv-fill)"
+        fillOpacity="0.08"
       />
-      {/* C segment (curved around the V and L) */}
+      {/* Box center line */}
       <path 
-        d="M80 40C78 25 62 15 48 20C32 25 24 45 32 65C38 78 55 85 70 75" 
-        stroke="url(#vcl-grad-c)" 
-        strokeWidth="12" 
+        d="M50 55L50 93" 
+        stroke="url(#vcl-inv-grad-mid)" 
+        strokeWidth="5" 
         strokeLinecap="round" 
-        strokeLinejoin="round"
       />
-      {/* L segment / Uptrend arrow pointing to upper right */}
+      {/* Box top fold left */}
       <path 
-        d="M50 55L75 30H90" 
-        stroke="url(#vcl-grad-l)" 
-        strokeWidth="10" 
-        strokeLinecap="round" 
+        d="M15 38L50 55L85 38" 
+        stroke="url(#vcl-inv-grad-top)" 
+        strokeWidth="6" 
         strokeLinejoin="round" 
+        strokeLinecap="round" 
       />
-      {/* Arrow Head */}
+      {/* Upward arrow (inventory in) */}
       <path 
-        d="M90 30L82 22M90 30L82 38" 
-        stroke="url(#vcl-grad-l)" 
-        strokeWidth="10" 
+        d="M50 8L50 32" 
+        stroke="url(#vcl-inv-grad-arrow)" 
+        strokeWidth="7" 
+        strokeLinecap="round" 
+      />
+      <path 
+        d="M38 18L50 8L62 18" 
+        stroke="url(#vcl-inv-grad-arrow)" 
+        strokeWidth="7" 
         strokeLinecap="round" 
         strokeLinejoin="round" 
       />
       
       <defs>
-        <linearGradient id="vcl-grad-v" x1="20" y1="25" x2="55" y2="80" gradientUnits="userSpaceOnUse">
+        <linearGradient id="vcl-inv-grad-box" x1="15" y1="20" x2="85" y2="93" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="var(--color-accent)" />
           <stop offset="100%" stopColor="#A78BFA" />
         </linearGradient>
-        <linearGradient id="vcl-grad-c" x1="80" y1="15" x2="70" y2="85" gradientUnits="userSpaceOnUse">
+        <linearGradient id="vcl-inv-fill" x1="15" y1="20" x2="85" y2="93" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="var(--color-accent)" />
+          <stop offset="100%" stopColor="#A78BFA" />
+        </linearGradient>
+        <linearGradient id="vcl-inv-grad-mid" x1="50" y1="55" x2="50" y2="93" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="var(--color-accent)" />
+          <stop offset="100%" stopColor="#EC4899" />
+        </linearGradient>
+        <linearGradient id="vcl-inv-grad-top" x1="15" y1="38" x2="85" y2="38" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#10B981" />
           <stop offset="50%" stopColor="var(--color-accent)" />
           <stop offset="100%" stopColor="#EC4899" />
         </linearGradient>
-        <linearGradient id="vcl-grad-l" x1="50" y1="55" x2="90" y2="30" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#EC4899" />
-          <stop offset="100%" stopColor="#F472B6" />
+        <linearGradient id="vcl-inv-grad-arrow" x1="50" y1="8" x2="50" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#10B981" />
+          <stop offset="100%" stopColor="var(--color-accent)" />
         </linearGradient>
       </defs>
     </svg>

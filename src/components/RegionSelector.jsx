@@ -1,26 +1,26 @@
 import React from 'react';
 import VclLogo from './VclLogo';
-import { Landmark, Navigation } from 'lucide-react';
+import { Warehouse, MapPin } from 'lucide-react';
 
 export default function RegionSelector({ onSelectRegion }) {
   const regions = [
     {
       id: 'mumbai',
-      name: 'Mumbai Terminal',
-      description: 'Primary financial hub gateway covering South Mumbai, Bandra, Andheri, and Navi Mumbai exchanges.',
-      icon: Landmark,
+      name: 'Mumbai Warehouse',
+      description: 'Central distribution hub covering Andheri, Navi Mumbai, Thane, Bandra, Borivali, and Dadar outlets.',
+      icon: Warehouse,
       color: 'var(--color-accent)',
       bg: 'var(--color-accent-soft)',
-      badge: 'BSE / NSE Hub'
+      badge: 'Main Hub'
     },
     {
       id: 'gujarat',
-      name: 'Gujarat GIFT City Terminal',
-      description: 'Special economic zone gateway covering GIFT City, Ahmedabad, Surat, and Rajkot trade nodes.',
-      icon: Navigation,
+      name: 'Gujarat Warehouse',
+      description: 'Western region distribution centre covering GIFT City, Ahmedabad, Surat, Vadodara, Rajkot, and Gandhinagar.',
+      icon: Warehouse,
       color: '#10B981',
       bg: 'rgba(16, 185, 129, 0.08)',
-      badge: 'IFSC IFSC Hub'
+      badge: 'West Hub'
     }
   ];
 
@@ -51,10 +51,10 @@ export default function RegionSelector({ onSelectRegion }) {
           </div>
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight mt-1" style={{ color: 'var(--color-text-primary)' }}>
-              VCL Stock Terminal
+              VCL Inventory
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              Select your regional gateway node to configure exchange tickers and transaction books
+              Select your warehouse location to load inventory data and analytics
             </p>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function RegionSelector({ onSelectRegion }) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {/* Node Badge */}
+                {/* Badge */}
                 <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border"
                   style={{
                     color: r.color,
@@ -107,7 +107,7 @@ export default function RegionSelector({ onSelectRegion }) {
                 
                 <div className="mt-6 text-xs font-bold flex items-center gap-1.5"
                   style={{ color: r.color }}>
-                  Connect Terminal &rarr;
+                  Open Warehouse &rarr;
                 </div>
               </button>
             );

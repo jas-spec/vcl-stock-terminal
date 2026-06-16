@@ -12,10 +12,10 @@ import { ChartCard, CustomTooltip, useChartTheme } from './ChartComponents';
 
 const BAR_COLORS = [
   'var(--color-accent)',
-  '#34D399',
+  '#10B981',
   '#EC4899',
   '#F59E0B',
-  '#A78BFA',
+  '#8B5CF6',
   '#06B6D4'
 ];
 
@@ -27,8 +27,8 @@ export default function BarChartPanel({ data }) {
   return (
     <ChartCard
       id="chart-bar"
-      title="Trading Volume by Region"
-      subtitle="Total VCL shares traded across global exchanges"
+      title="Stock by Category"
+      subtitle="Total inventory quantity across product categories"
     >
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -45,12 +45,12 @@ export default function BarChartPanel({ data }) {
               tick={{ fontSize: 11, fill: textColor }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => `${v} qty`}
             />
-            <Tooltip content={<CustomTooltip valueSuffix=" shares" />} cursor={{ fill: 'var(--color-accent-soft)' }} />
+            <Tooltip content={<CustomTooltip valueSuffix=" units" />} cursor={{ fill: 'var(--color-accent-soft)' }} />
             <Bar
               dataKey="value"
-              name="Volume"
+              name="Quantity"
               radius={[6, 6, 0, 0]}
               maxBarSize={45}
               animationDuration={300}

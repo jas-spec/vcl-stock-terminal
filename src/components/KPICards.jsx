@@ -1,15 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
 import {
-  DollarSign,
-  TrendingUp,
-  Activity,
-  Layers,
+  Package,
+  AlertTriangle,
+  XCircle,
+  IndianRupee,
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
 
-// Single KPI Card Component that handles real-time visual flashing updates
-function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = true, direction, gradient, bgColor }) {
+// Single KPI Card with real-time flash updates
+function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = true, direction, gradient, bgColor, iconColor }) {
   const [flashClass, setFlashClass] = useState('');
   const prevValueRef = useRef(value);
 
@@ -31,7 +31,6 @@ function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = 
   const isPositive = trend >= 0;
   const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight;
 
-  // Render flashing inline border or background
   const flashStyle = {};
   if (flashClass === 'flash-up') {
     flashStyle.borderColor = '#10B981';
@@ -65,9 +64,7 @@ function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = 
         <div className="flex items-center justify-between mb-4">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
             style={{ background: bgColor }}>
-            <Icon size={20} style={{ color: gradient.includes('#6366F1') ? 'var(--color-accent)' :
-              gradient.includes('#10B981') ? '#10B981' :
-              gradient.includes('#F59E0B') ? '#F59E0B' : '#EC4899' }} />
+            <Icon size={20} style={{ color: iconColor }} />
           </div>
           <div className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg"
             style={{
@@ -75,7 +72,7 @@ function KPICard({ label, value, format, icon: Icon, trend, isPercentageTrend = 
               color: isPositive ? 'var(--color-success)' : 'var(--color-danger)',
             }}>
             <TrendIcon size={12} />
-            {Math.abs(trend).toFixed(2)}{isPercentageTrend ? '%' : ''}
+            {Math.abs(trend).toFixed(1)}{isPercentageTrend ? '%' : ''}
           </div>
         </div>
 
@@ -107,52 +104,52 @@ export default function KPICards({ data }) {
 
   const cards = [
     {
-      key: 'price',
-      label: 'VCL Stock Price',
-      value: data.price,
-      format: (v) => `$${Number(v).toFixed(2)}`,
-      icon: DollarSign,
-      trend: data.change, // Daily price percentage delta
+      key: 'totalItems',
+      label: 'Total Products',
+      value: data.totalItems,
+      format: (v) => `${v} Items`,
+      icon: Package,
+      trend: data.quantityChange || 1.2,
       isPercentageTrend: true,
-      direction: data.priceDirection,
       gradient: 'linear-gradient(135deg, var(--color-accent), #818CF8)',
       bgColor: 'var(--color-accent-soft)',
+      iconColor: 'var(--color-accent)',
     },
     {
-      key: 'volume',
-      label: 'Accumulated Volume',
-      value: data.volume,
-      format: (v) => Number(v).toLocaleString(),
-      icon: Layers,
-      trend: 4.85, // Session growth indicator
-      isPercentageTrend: true,
-      direction: 'up',
-      gradient: 'linear-gradient(135deg, #EC4899, #F472B6)',
-      bgColor: 'rgba(236, 72, 153, 0.08)',
-    },
-    {
-      key: 'volatility',
-      label: 'Volatility Index',
-      value: data.volatility,
-      format: (v) => `${Number(v).toFixed(2)}%`,
-      icon: Activity,
-      trend: -0.15,
+      key: 'lowStock',
+      label: 'Low Stock Items',
+      value: data.lowStock,
+      format: (v) => `${v} Items`,
+      icon: AlertTriangle,
+      trend: data.lowStockChange || -1.5,
       isPercentageTrend: false,
-      direction: 'down',
       gradient: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
       bgColor: 'rgba(245, 158, 11, 0.08)',
+      iconColor: '#F59E0B',
     },
     {
-      key: 'change',
-      label: 'Net Daily Change',
-      value: data.change,
-      format: (v) => `${v >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`,
-      icon: TrendingUp,
-      trend: data.change,
+      key: 'outOfStock',
+      label: 'Out of Stock',
+      value: data.outOfStock,
+      format: (v) => `${v} Items`,
+      icon: XCircle,
+      trend: data.outOfStockChange || 2.0,
+      isPercentageTrend: false,
+      gradient: 'linear-gradient(135deg, #EF4444, #F87171)',
+      bgColor: 'rgba(239, 68, 68, 0.08)',
+      iconColor: '#EF4444',
+    },
+    {
+      key: 'totalValue',
+      label: 'Inventory Value',
+      value: data.totalValue,
+      format: (v) => `₹${Number(v).toLocaleString('en-IN')}`,
+      icon: IndianRupee,
+      trend: data.valueChange || 3.2,
       isPercentageTrend: true,
-      direction: data.change >= 0 ? 'up' : 'down',
       gradient: 'linear-gradient(135deg, #10B981, #34D399)',
       bgColor: 'rgba(16, 185, 129, 0.08)',
+      iconColor: '#10B981',
     },
   ];
 
@@ -167,9 +164,9 @@ export default function KPICards({ data }) {
           icon={card.icon}
           trend={card.trend}
           isPercentageTrend={card.isPercentageTrend}
-          direction={card.direction}
           gradient={card.gradient}
           bgColor={card.bgColor}
+          iconColor={card.iconColor}
         />
       ))}
     </div>

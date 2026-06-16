@@ -59,7 +59,7 @@ export default function Sidebar({ activeView, onNavigate }) {
               <VclLogo className="w-6 h-6 animate-pulse-glow" />
             </div>
             <span className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              VCL Stock
+              VCL Inventory
             </span>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function Sidebar({ activeView, onNavigate }) {
             <span className={`text-lg font-extrabold tracking-tight whitespace-nowrap transition-opacity duration-200
               ${collapsed ? 'lg:hidden lg:opacity-0' : 'opacity-100'}`}
               style={{ color: 'var(--color-text-primary)' }}>
-              VCL Stock
+              VCL Inventory
             </span>
           </div>
           <button
